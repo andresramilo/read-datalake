@@ -1,10 +1,11 @@
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+
 
 import com.azure.storage.common.StorageSharedKeyCredential;
 import com.azure.storage.file.datalake.DataLakeFileClient;
@@ -24,7 +25,7 @@ public class AzureDataLakeClient {
 	public static void main(String[] args) throws FileNotFoundException, IOException {
 		DataLakeServiceClient cli = GetDataLakeServiceClient(accountName,accountKey);
 		DataLakeFileSystemClient fileSystemClient = cli.getFileSystemClient(fileSystemName);
-		DownloadFile3(fileSystemClient);
+		DownloadFile4(fileSystemClient);
 	}
 	
 	
@@ -88,6 +89,30 @@ public class AzureDataLakeClient {
 
 	}
 	
+	static public void DownloadFile4(DataLakeFileSystemClient fileSystemClient)
+			throws FileNotFoundException, java.io.IOException{
+
+		DataLakeFileClient fileClient =
+				fileSystemClient.getFileClient("teste.txt.gz");
+		TestOutputStream os = new TestOutputStream();
+		fileClient.read(os);
+		
+		InputStream gzis = os.toGZIPInputStream();
+		FileChannel fileChannel = FileChannel.open(
+				Paths.get("/Users/andresromero/eclipse-workspace-2020/read-datalake/teste.txt"), 
+				StandardOpenOption.CREATE,StandardOpenOption.WRITE);
+		
+		
+		byte[] buf = new byte[1024];
+		ByteBuffer buffer = ByteBuffer.wrap(buf);
+		while (gzis.read(buf) > 0) {
+			fileChannel.write(buffer);
+
+		}
+		fileChannel.close();
+		gzis.close();
+
+	}
 	
 
 }
