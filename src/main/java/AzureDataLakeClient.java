@@ -1,11 +1,10 @@
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import com.azure.storage.common.StorageSharedKeyCredential;
 import com.azure.storage.file.datalake.DataLakeFileClient;
@@ -25,7 +24,7 @@ public class AzureDataLakeClient {
 	public static void main(String[] args) throws FileNotFoundException, IOException {
 		DataLakeServiceClient cli = GetDataLakeServiceClient(accountName,accountKey);
 		DataLakeFileSystemClient fileSystemClient = cli.getFileSystemClient(fileSystemName);
-		DownloadFile2(fileSystemClient);
+		DownloadFile3(fileSystemClient);
 	}
 	
 	
@@ -65,12 +64,29 @@ public class AzureDataLakeClient {
 		    String result = new BufferedReader(new InputStreamReader(is))
 		    		  .lines().collect(Collectors.joining("\n"));
 		    System.out.println(result);
-		    
-		    
-		    
-		      
 	}
-	
+
+	static public void DownloadFile3(DataLakeFileSystemClient fileSystemClient)
+			throws FileNotFoundException, java.io.IOException{
+
+		DataLakeFileClient fileClient =
+				fileSystemClient.getFileClient("teste.txt.gz");
+		TestOutputStream os = new TestOutputStream();
+		fileClient.read(os);
+		InputStream gzis = os.toGZIPInputStream();
+		File file = new File("/home/andres/development/code/read-datalake/teste.txt");
+
+		FileOutputStream fos = new FileOutputStream(file);
+		byte[] buffer = new byte[1024];
+		int len = 0;
+		while ((len = gzis.read(buffer)) > 0) {
+			fos.write(buffer, 0, len);
+		}
+
+		fos.close();
+		gzis.close();
+
+	}
 	
 	
 
